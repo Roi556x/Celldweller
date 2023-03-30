@@ -1,103 +1,48 @@
-#include <iostream>
-#include <getopt.h>
-#include <string>
-#include <bitset>
-#include <fstream>
-#include "Client.h"
+#include <UnitTest++/UnitTest++.h>
+#include "/home/stud/C++Projects/Education/Celldweller/Client.h"
+
 using namespace std;
-int main(int argc, char *argv[]) 
-{
-Client conn;
-setlocale(LC_ALL, "Rus");
-     if (argc==1)
-        {
-            cout<<"            ПРОГРАММА КЛИЕНТА"<<endl;
-            cout<<"__________________________________________________"<<endl;
-            cout<<"Параметры запуска программы:"<<endl;
-            cout<<"Файл с векторами: -s"<<endl;
-            cout<<"Файл результата: -r"<<endl;
-            cout<<"Имя пользователя: -u"<<endl;
-            cout<<"Пароль пользователя: -p"<<endl;
-            cout<<"Адресс сервера: -a"<<endl;
-            cout<<"Порт сервера: -d"<<endl;
-        }
-    string portcon, ip_adr;
 
-    int opt;
-    while ((opt = getopt (argc, argv, "hr:s:u:p:a:d:")) != -1)
-        {
-        switch (opt) 
-            {
-                case'?':
-                    throw error_client(string("Параметр задан неверно или он не существует"));
-                break;
-	    case 'h':
-            cout<<"            ПРОГРАММА КЛИЕНТА"<<endl;
-            cout<<"__________________________________________________"<<endl;
-            cout<<"Параметры запуска программы:"<<endl;
-            cout<<"Файл с векторами: -s"<<endl;
-            cout<<"Файл результата: -r"<<endl;
-            cout<<"Имя пользователя: -u"<<endl;
-            cout<<"Пароль пользователя: -p"<<endl;
-            cout<<"Адресс сервера: -a"<<endl;
-            cout<<"Порт сервера: -d"<<endl;   
-	    break;
-             
-            case 'r':
-            conn.name_result_file=string(optarg);
-            break;
+/*
+ Для макроса TEST_FIXTURE можно объявить специальный класс, в конструкторе которого будут выполняться действия, предваряющие тест, а в деструкторе — завершающие.
+*/
 
-
-           case 's': 
-            conn.name_original_file=string(optarg);
-            break;
-            
-            
-            
-            
-            case 'u':
-            if(optarg!=0)
-            {
-                conn.username= string(optarg);
-                cout<<"Username is: "<<conn.username<<endl;
-            }
-            break;
-            
-            
-            
-            case 'p':
-                if(optarg!=0)
-                {
-                    conn.password = string(optarg);
-                    cout<<"Password is: "<<conn.password<<endl;
-                }
-            break;
-            
-            
-            
-            case 'a':
-                if(optarg!=0)
-                {
-                    ip_adr= string(optarg);
-                    cout<<"Adress is: "<<ip_adr<<endl;
-                }
-            break;
-            
-            
-            
-            case 'd':
-            if (optarg!=0)
-            {
-                portcon = string(optarg);
-                cout<<"Port is: "<<portcon<<endl;
-                
-            }
-            break;
-            
-            
-            }
-             
-        }
-              
-            conn.connection(ip_adr, portcon);
+struct Cons_fix {
+    Client * p;
+    Cons_fix()
+    {
+        p = new Client();
     }
+    ~Cons_fix()
+    {
+        delete p;
+    }
+};
+
+SUITE(Server)//Макрос. FIXTURE при одинаковых аргумиентах
+{
+    TEST_FIXTURE(Cons_fix, NormalTest) {
+        p->name_original_file = "/home/stud/C++Projects/123144/build-Debug/bin/vectors.bin ";
+        p->name_result_file = "/home/stud/C++Projects/123144/build-Debug/bin/result.bin";
+        p->connection("127.0.0.1", "33333");
+        CHECK(true);
+    }
+    TEST_FIXTURE(Cons_fix, ErrIp) {
+        //2 Подключение к серверу. Введен не верный адрес
+        p->name_original_file = "/home/stud/C++Projects/123144/build-Debug/bin/vectors.bin ";
+        p->name_result_file = "/home/stud/C++Projects/123144/build-Debug/bin/result.bin";
+        CHECK_THROW(p->connection("2215024", "33333"), error_client);
+    }
+
+    TEST_FIXTURE(Cons_fix, ErrPort) {
+        //3 Подключение к серверу. Введен не верный порт
+        p->name_original_file = "/home/stud/C++Projects/123144/build-Debug/bin/vectors.bin ";
+        p->name_result_file = "/home/stud/C++Projects/123144/build-Debug/bin/result.bin";
+        CHECK_THROW(p->connection("127.0.0.1", "3445"), error_client);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    return UnitTest::RunAllTests();
+}
